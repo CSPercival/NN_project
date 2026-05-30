@@ -1,12 +1,5 @@
 import torch
-import torchvision.transforms as transforms
 import torchvision.transforms.functional as F
-from torch.utils.data import random_split
-from torch.utils.data import Dataset, DataLoader
-from torchvision.datasets import CocoDetection
-from pycocotools.coco import COCO
-import os
-from PIL import Image
 
 def target_transform(image, target, S, C, cat_id_to_index):
     w, h = image.size

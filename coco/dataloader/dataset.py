@@ -1,12 +1,10 @@
 import torch
-import torchvision.transforms as transforms
-import torchvision.transforms.functional as F
-from torch.utils.data import random_split
-from torch.utils.data import Dataset, DataLoader
-from torchvision.datasets import CocoDetection
+from torch.utils.data import Dataset
 from pycocotools.coco import COCO
 import os
 from PIL import Image
+
+from config.consts import img_size
 
 class COCODataset(Dataset):
     def __init__(self, root_dir, annotation_file, transform, img_size, S, B, C, cat_id_to_index):
@@ -49,6 +47,6 @@ class COCODataset(Dataset):
             # if self.transform_mode == 0:
             #   image = self.transform(image)
             # else:
-          image, target = self.transform(image, target, cat_id_to_index, (img_size, img_size), self.S, self.C)
+          image, target = self.transform(image, target, self.cat_id_to_index, (img_size, img_size), self.S, self.C)
 
         return image, target

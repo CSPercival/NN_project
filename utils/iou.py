@@ -1,4 +1,5 @@
 import torch
+from config.consts import S, img_size
 
 def iou(boxes1, boxes2):
     box1_x1 = boxes1[..., 0:1] - boxes1[..., 2:3] / 2 * img_size / S

@@ -1,18 +1,5 @@
+from config.consts import S, C, B, dropout_rate
 
-
-lambda_coord = 5
-lambda_noobj = 0.5
-
-conf_threshold = 0.4
-iou_threshold = 0.5
-dropout_rate = 0.5
-
-# batch_size = 64
-batch_size = 16
-# epochs = 135
-epochs = 10
-lr = 1e-5
-weight_decay = 5e-4
 
 YOLO_architecture = [
     ("Conv", 7, 64, 2, 3),
