@@ -13,8 +13,10 @@ S = 7
 # bounding boxes per cell
 B = 2
 
+available_classes = ["person", "bicycle", "car"]
 # number of classes
-C = 80
+C = len(available_classes)
+# C = 80
 
 lambda_coord = 5
 lambda_noobj = 0.5

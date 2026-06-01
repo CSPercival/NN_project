@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms.functional as F
 
-def target_transform(image, target, S, C, cat_id_to_index):
+def target_transform(image, target, S, C):
     w, h = image.size
     grid_w = w / S
     grid_h = h / S
@@ -29,10 +29,10 @@ def target_transform(image, target, S, C, cat_id_to_index):
         new_area = new_w * new_h
         existing_area = new_target[y_grid, x_grid, C+3] * new_target[y_grid, x_grid, C+4]
 
-        label = cat_id_to_index[label.item()]
+        label = label.item()
 
         if new_target[y_grid, x_grid, C] == 0 or new_area > existing_area:
-            new_target[y_grid, x_grid] = 0
+            new_target[y_grid, x_grid, :] = 0
             new_target[y_grid, x_grid, label] = 1
             new_target[y_grid, x_grid, C:C+5] = torch.tensor([1, x_rel, y_rel, new_w, new_h])
 
@@ -40,8 +40,8 @@ def target_transform(image, target, S, C, cat_id_to_index):
 
 
 
-def yolo_transform(image, target, cat_id_to_index, new_size=(448, 448), S=7, C=80):
-    target = target_transform(image, target, S, C, cat_id_to_index)
+def yolo_transform(image, target, new_size=(448, 448), S=7, C=80):
+    target = target_transform(image, target, S, C)
     w, h = image.size
 
     image = F.resize(image, new_size)

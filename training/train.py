@@ -1,6 +1,6 @@
 import torch
 
-def model_train(model, loader, optimizer, device, loss):
+def model_train(model, loader, optimizer, device, loss_function):
     model.train()
     total_loss = 0.0
     num_batches = 0
@@ -12,7 +12,7 @@ def model_train(model, loader, optimizer, device, loss):
 
         predictions = model(images)
 
-        loss = loss(predictions, targets)
+        loss = loss_function(predictions, targets)
 
         optimizer.zero_grad()
         loss.backward()
@@ -28,7 +28,7 @@ def model_train(model, loader, optimizer, device, loss):
 
 
 @torch.no_grad()
-def model_evaluate(model, loader, device, loss):
+def model_evaluate(model, loader, device, loss_function):
     model.eval()
     total_loss = 0.0
     total_loss = 0.0
@@ -41,7 +41,7 @@ def model_evaluate(model, loader, device, loss):
 
         predictions = model(images)
 
-        loss = loss(predictions, targets)
+        loss = loss_function(predictions, targets)
 
         total_loss += loss.item()
         num_batches += 1
