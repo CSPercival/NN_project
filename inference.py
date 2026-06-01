@@ -1,5 +1,7 @@
 import torch
 import argparse
+import glob
+import os
 from torch.utils.data import DataLoader, random_split
 
 from config.consts import img_size, S, B, C, available_classes
@@ -18,7 +20,7 @@ def run_inference(weights_path, threshold, num_images):
 
     # Zapewnienie powtarzalnego podziału (takiego samego jak w main.py)
     # Możesz dodać generator=torch.Generator().manual_seed(23) do random_split, jeśli używasz SEED
-    train_size = int(0.1 * len(coco_dataset))
+    train_size = int(0.9 * len(coco_dataset))
     val_size = len(coco_dataset) - train_size
     _, val_dataset = random_split(coco_dataset, [train_size, val_size])
     
@@ -27,6 +29,16 @@ def run_inference(weights_path, threshold, num_images):
 
     # Inicjalizacja modelu i wczytywanie wag
     model = YOLOv1(YOLO_architecture)
+
+    # Automatyczne szukanie najnowszych wag, jeśli ustawiono 'auto'
+    if weights_path == "auto":
+        weight_files = glob.glob("yolo_weights*.pth")
+        if not weight_files:
+            print("Błąd: Nie znaleziono żadnego pliku z wagami (yolo_weights*.pth).")
+            return
+        weights_path = max(weight_files, key=os.path.getmtime)
+        print(f"--> [AUTO] Najnowsze wagi znalezione to: {weights_path}")
+
     try:
         model.load_state_dict(torch.load(weights_path, map_location="cpu"))
         print(f"Sukces: Pomyślnie załadowano wagi z {weights_path}")
@@ -64,7 +76,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Zależności inferencji i wizualizacji (YOLOv1)")
     
     # Argumenty, które możesz zmieniać w terminalu
-    parser.add_argument("--weights", type=str, default="yolo_weights.pth", help="Ścieżka do zapisanych wag modelu")
+    parser.add_argument("--weights", type=str, default="auto", help="Ścieżka do zapisanych wag modelu (domyślnie 'auto' - bierze najnowsze)")
     parser.add_argument("--threshold", type=float, default=0.2, help="Próg pewności (confidence threshold) dla predykcji")
     parser.add_argument("--num_images", type=int, default=2, help="Liczba obrazów do wyświetlenia")
     

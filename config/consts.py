@@ -28,6 +28,6 @@ dropout_rate = 0.5
 # batch_size = 64
 batch_size = 16
 # epochs = 135
-epochs = 50
+epochs = 10
 lr = 5e-5
 weight_decay = 5e-4

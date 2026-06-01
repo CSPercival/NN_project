@@ -17,7 +17,7 @@ transform = yolo_transform
 
 coco_dataset = COCODataset(IMG_DIR, ANN_FILE, transform, img_size, S, B, C, available_classes, True)
 
-train_size = int(0.1 * len(coco_dataset))
+train_size = int(0.9 * len(coco_dataset))
 val_size = len(coco_dataset) - train_size
 
 train_dataset, val_dataset = random_split(coco_dataset, [train_size, val_size])
