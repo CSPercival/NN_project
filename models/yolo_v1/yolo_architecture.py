@@ -43,11 +43,11 @@ YOLO_architecture = [
 
     ("Flatten",),
 
-    ("FC", 1024 * S * S, 4096),
+    ("FC", 1024 * S * S, 512),
 
     ("LeakyReLU", 0.1),
 
     ("Dropout", dropout_rate),
 
-    ("FC", 4096, S * S * (C + B * 5)),
+    ("FC", 512, S * S * (C + B * 5)),
 ]

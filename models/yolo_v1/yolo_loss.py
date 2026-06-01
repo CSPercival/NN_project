@@ -8,10 +8,10 @@ def YOLO_loss(preds, targets):
     preds = preds.reshape(-1, S, S, C + B * 5)
     batch_size = preds.size(0)
 
-    pred_classes = preds[..., :C]
+    pred_classes = torch.sigmoid(preds[..., :C])
     pred_boxes = preds[..., C:].reshape(-1, S, S, B, 5)
-    pred_conf = pred_boxes[..., 0:1]
-    pred_x_y = pred_boxes[..., 1:3]
+    pred_conf = torch.sigmoid(pred_boxes[..., 0:1])
+    pred_x_y = torch.sigmoid(pred_boxes[..., 1:3])
     pred_w_h = torch.sign(pred_boxes[..., 3:5]) * torch.sqrt(torch.abs(pred_boxes[..., 3:5]).clamp(1e-6))
 
     target_box = targets[..., C+1:C+5].unsqueeze(3)
@@ -29,8 +29,9 @@ def YOLO_loss(preds, targets):
     loss_w_h = torch.sum(exists_box * best_box_mask * (pred_w_h - target_w_h) ** 2)
     loss_coord = loss_x_y + loss_w_h
 
-    target_conf = max_iou.detach()
-    # maybe target_conf = 1 might be better as the original iou version leady to very small loss_obj early in training
+    # Podczas początkowych faz treningu pewność docelowa obiektu na starcie to 1.0 (zamiast max_iou)
+    target_conf = torch.ones_like(max_iou)
+    # W późniejszych fazach można zmienić z powrotem na target_conf = max_iou.detach()
     loss_obj = torch.sum(exists_box * best_box_mask * (pred_conf - target_conf)**2)
 
     no_obj_mask = torch.ones_like(pred_conf) - (exists_box * best_box_mask)
