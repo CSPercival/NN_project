@@ -49,3 +49,9 @@ for epoch in range(epochs):
 weights_path = "yolo_weights.pth"
 torch.save(model.state_dict(), weights_path)
 print(f"Trening zakończony. Wagi modelu zapisane do: {weights_path}")
+
+import json
+losses_path = "train_losses.json"
+with open(losses_path, "w") as f:
+    json.dump([float(loss) for loss in train_losses], f)
+print(f"Wartości błędu (loss) zapisane do: {losses_path}")
