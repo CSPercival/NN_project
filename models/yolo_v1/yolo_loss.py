@@ -30,7 +30,7 @@ def YOLO_loss(preds, targets):
     loss_coord = loss_x_y + loss_w_h
 
     # Podczas początkowych faz treningu pewność docelowa obiektu na starcie to 1.0 (zamiast max_iou)
-    target_conf = torch.ones_like(max_iou)
+    target_conf = max_iou.detach()
     # W późniejszych fazach można zmienić z powrotem na target_conf = max_iou.detach()
     loss_obj = torch.sum(exists_box * best_box_mask * (pred_conf - target_conf)**2)
 

@@ -57,10 +57,14 @@ optimizer = torch.optim.Adam(
 train_losses = []
 
 torch.cuda.empty_cache()
-for epoch in range(epochs):
+for epoch in range(500):
     print(f"Started epoch: {epoch} (kontynuacja treningu)", flush=True)
     train_loss = model_train(model, train_dataloader, optimizer, device, YOLO_loss)
     train_losses.append(train_loss)
+    torch.save(model.state_dict(), f"yolo_weights_last_training_epoch_{10 + epoch}.pth")
+    new_losses_path = f"train_last_training_losses_{epoch}.json"
+    with open(new_losses_path, "w") as f:
+        json.dump([float(loss) for loss in train_losses], f)
     print(f"\n  Training done\n", flush=True)
 
 # -------------------------------------------------------------------------

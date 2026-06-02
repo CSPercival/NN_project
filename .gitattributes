@@ -1,1 +1,2 @@
 yolo_weights_3.pth filter=lfs diff=lfs merge=lfs -text
+yolo_weights_last_training_epoch_365.pth filter=lfs diff=lfs merge=lfs -text

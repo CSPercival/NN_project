@@ -8,6 +8,7 @@ __pycache__/
 
 # weights
 *.pth
+train_last_training_losses_*.json
 
 # Distribution / packaging
 .Python
