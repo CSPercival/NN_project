@@ -26,7 +26,7 @@ iou_threshold = 0.5
 dropout_rate = 0.5
 
 # batch_size = 64
-batch_size = 16
+batch_size = 64
 # epochs = 135
 epochs = 10
 lr = 2e-5
