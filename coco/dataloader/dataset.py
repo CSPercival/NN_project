@@ -10,9 +10,7 @@ class COCODataset(Dataset):
     def __init__(self, root_dir, annotation_file, transform, img_size, S, B, C, categories=None, filter_flag=False):
         self.root_dir = root_dir
         self.coco = COCO(annotation_file)
-        # self.image_ids = list(self.coco.imgs.keys())
         self.transform = transform
-        # self.cat_id_to_index = cat_id_to_index
         self.S = S
         self.B = B
         self.C = C
@@ -46,10 +44,7 @@ class COCODataset(Dataset):
         target['labels'] = labels
 
         if self.transform:
-            # if self.transform_mode == 0:
-            #   image = self.transform(image)
-            # else:
-          image, target = self.transform(image, target, (img_size, img_size), self.S, self.C)
+            image, target = self.transform(image, target, (img_size, img_size), self.S, self.C)
 
         return image, target
     
@@ -78,24 +73,42 @@ class COCODataset(Dataset):
         self.id_to_category_name = new_categories
         self.category_name_to_id = {name: id for id, name in enumerate(new_categories)}
 
+        # Słownik do śledzenia liczby obrazków dla każdej wybranej klasy
+        class_image_counts = {name: 0 for name in new_categories}
+
         for image_id in self.coco.imgs.keys():
             ann_ids = self.coco.getAnnIds(imgIds=image_id)
             anns = self.coco.loadAnns(ann_ids)
 
-            # filtered_anns = [ann for ann in anns if ann['category_id'] in id_old_to_new]
             filtered_anns = []
+            present_classes_in_image = set()
+
             for ann in anns:
                 cat_id = ann["category_id"]
                 if cat_id not in id_old_to_new:
                     continue
                 
-                ann["category_id"] = id_old_to_new[cat_id]
+                new_cat_id = id_old_to_new[cat_id]
+                ann["category_id"] = new_cat_id
                 filtered_anns.append(ann)
+                
+                # Dodajemy nazwę klasy do zbioru, aby zapisać, że występuje na tym zdjęciu
+                present_classes_in_image.add(self.id_to_category_name[new_cat_id])
 
             if len(filtered_anns) == 0:
                 continue
+            
+            # Zwiększamy licznik obrazków dla każdej unikalnej klasy wykrytej na tym zdjęciu
+            for class_name in present_classes_in_image:
+                class_image_counts[class_name] += 1
 
             self.data.append({
                 "image_id": image_id,
                 "anns": filtered_anns,
             })
+
+        # Wypisywanie statystyk na konsolę po zakończeniu filtrowania
+        print(f"\n--> [DATASET INFO] Statystyki po wyfiltrowaniu:")
+        for class_name, count in class_image_counts.items():
+            print(f"    - Klasa '{class_name}' występuje na {count} obrazkach.")
+        print(f"    [ŁĄCZNIE]: Przefiltrowany zbiór zawiera {len(self.data)} unikalnych obrazków.\n")

@@ -13,7 +13,7 @@ S = 7
 # bounding boxes per cell
 B = 2
 
-available_classes = ["person", "bicycle", "car"]
+available_classes = ["bus", "train", "airplane","elephant", "zebra", "giraffe"]
 # number of classes
 C = len(available_classes)
 # C = 80

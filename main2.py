@@ -8,7 +8,8 @@ from pycocotools.coco import COCO
 from torch.utils.data import DataLoader, random_split
 
 from config.consts import device, lr, weight_decay, epochs, batch_size, img_size, S, B, C, available_classes, conf_threshold
-from config.paths import IMG_DIR_VAL, ANN_FILE_VAL
+# ZMIANA 1: Importujemy również ścieżki do dużego zbioru treningowego
+from config.paths import IMG_DIR_VAL, ANN_FILE_VAL, IMG_DIR_TRAIN, ANN_FILE_TRAIN
 from models.yolo_v1.yolo import YOLOv1
 from models.yolo_v1.yolo_architecture import YOLO_architecture
 from models.yolo_v1.yolo_loss import YOLO_loss
@@ -22,6 +23,8 @@ from coco.dataloader.dataset import COCODataset
 parser = argparse.ArgumentParser(description="Skrypt treningowy YOLOv1")
 parser.add_argument("--weights", type=str, default=None, help="Ścieżka do wag początkowych (opcjonalnie)")
 parser.add_argument("--results_dir", type=str, default=None, help="Ścieżka do folderu na wyniki (opcjonalnie)")
+# ZMIANA 2: Dodanie flagi (action="store_true" oznacza, że sama obecność flagi daje True)
+parser.add_argument("--big_files", action="store_true", help="Użyj pełnego zbioru train2017 do treningu i val2017 do walidacji")
 args = parser.parse_args()
 
 # 1. Ustalanie folderu na wyniki
@@ -41,12 +44,26 @@ print(f"--> [INFO] Wyniki będą zapisywane w folderze: {RESULTS_DIR}")
 # -------------------------------------------------------------------------
 transform = yolo_transform
 
-coco_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
+# ZMIANA 3: Warunkowe ładowanie zbiorów w zależności od flagi --big_files
+if args.big_files:
+    print("--> [INFO] Tryb BIG FILES: Trening na train2017, Walidacja na val2017")
+    
+    # Trening na pełnym, ogromnym zbiorze
+    train_dataset = COCODataset(IMG_DIR_TRAIN, ANN_FILE_TRAIN, transform, img_size, S, B, C, available_classes, True)
+    
+    # Walidacja na oficjalnym, mniejszym zbiorze walidacyjnym
+    val_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
 
-train_size = int(0.9 * len(coco_dataset))
-val_size = len(coco_dataset) - train_size
+else:
+    print("--> [INFO] Tryb SMALL FILES: Trening i Walidacja na małym val2017 (podział 90/10)")
+    
+    # Ładujemy tylko zbiór walidacyjny i dzielimy go losowo
+    coco_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
+    
+    train_size = int(0.9 * len(coco_dataset))
+    val_size = len(coco_dataset) - train_size
+    train_dataset, val_dataset = random_split(coco_dataset, [train_size, val_size])
 
-train_dataset, val_dataset = random_split(coco_dataset, [train_size, val_size])
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
@@ -88,7 +105,7 @@ for epoch in range(0, 2000):
     if epoch % 10 == 0:
         torch.save(model.state_dict(), f"{RESULTS_DIR}/yolo_weights_epoch_{epoch}.pth")
     
-    # Zapis plików JSON (nadpisywanie, żeby nie tworzyć tysięcy plików na dysku)
+    # Zapis plików JSON (uwaga: to nadal tworzy nowy plik co epokę)
     with open(f"{RESULTS_DIR}/train_losses_current_epoch_{epoch}.json", "w") as f:
         json.dump([float(loss) for loss in train_losses], f)
         
