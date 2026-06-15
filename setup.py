@@ -1,3 +1,3 @@
-from scripts.data_setup import data_setup
+from scripts.data_setup_train import data_setup
 
 data_setup()

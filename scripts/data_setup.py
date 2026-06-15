@@ -4,7 +4,7 @@ import config.paths as paths
 def download():
     os.makedirs(paths.DATA_DIR, exist_ok=True)
 
-    for url in paths.COCO_FILES.values():
+    for url in paths.COCO_FILES_VAL.values():
         os.system(f"wget -P {paths.DATA_DIR} {url}")
 
 

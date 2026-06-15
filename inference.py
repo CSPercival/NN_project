@@ -5,7 +5,7 @@ import os
 from torch.utils.data import DataLoader, random_split
 
 from config.consts import img_size, S, B, C, available_classes
-from config.paths import IMG_DIR, ANN_FILE
+from config.paths import IMG_DIR_VAL, ANN_FILE_VAL
 from models.yolo_v1.yolo import YOLOv1
 from models.yolo_v1.yolo_architecture import YOLO_architecture
 from coco.dataloader.transform import yolo_transform 
@@ -16,7 +16,7 @@ from utils.best_box import select_best_box
 def run_inference(weights_path, threshold, num_images):
     # Ladowanie zbioru danych
     transform = yolo_transform
-    coco_dataset = COCODataset(IMG_DIR, ANN_FILE, transform, img_size, S, B, C, available_classes, True)
+    coco_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
 
     # Zapewnienie powtarzalnego podziału (takiego samego jak w main.py)
     # Możesz dodać generator=torch.Generator().manual_seed(23) do random_split, jeśli używasz SEED

@@ -3,7 +3,7 @@ from pycocotools.coco import COCO
 from torch.utils.data import DataLoader, random_split
 
 from config.consts import device, lr, weight_decay, epochs, batch_size, img_size, S, B, C, available_classes, conf_threshold
-from config.paths import IMG_DIR, ANN_FILE
+from config.paths import IMG_DIR_VAL, ANN_FILE_VAL
 from models.yolo_v1.yolo import YOLOv1
 from models.yolo_v1.yolo_architecture import YOLO_architecture
 from models.yolo_v1.yolo_loss import YOLO_loss
@@ -15,7 +15,7 @@ from utils.best_box import select_best_box
 
 transform = yolo_transform
 
-coco_dataset = COCODataset(IMG_DIR, ANN_FILE, transform, img_size, S, B, C, available_classes, True)
+coco_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
 
 train_size = int(0.9 * len(coco_dataset))
 val_size = len(coco_dataset) - train_size
