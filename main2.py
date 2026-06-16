@@ -64,8 +64,23 @@ else:
     val_size = len(coco_dataset) - train_size
     train_dataset, val_dataset = random_split(coco_dataset, [train_size, val_size])
 
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+train_dataloader = DataLoader(
+    train_dataset, 
+    batch_size=batch_size, 
+    shuffle=True,
+    num_workers=4,
+    pin_memory=True,
+    prefetch_factor=2,
+    persistent_workers=True 
+)
+
+val_dataloader = DataLoader(
+    val_dataset, 
+    batch_size=batch_size, 
+    shuffle=False,
+    num_workers=2,
+    pin_memory=True
+)
 
 model = YOLOv1(YOLO_architecture).to(device)
 
@@ -97,10 +112,10 @@ for epoch in range(0, 2000):
     print(f"Started epoch: {epoch}", flush=True)
     
     train_loss = model_train(model, train_dataloader, optimizer, device, YOLO_loss)
-    train_losses.append(train_loss)
-    
+    train_losses.append(train_loss.item() if torch.is_tensor(train_loss) else train_loss)
+    print(f"{1 if torch.is_tensor(train_loss) else 0}")
     val_loss = model_evaluate(model, val_dataloader, device, YOLO_loss)
-    val_losses.append(val_loss)
+    val_losses.append(val_loss.item() if torch.is_tensor(val_loss) else val_loss)
 
     if epoch % 10 == 0:
         torch.save(model.state_dict(), f"{RESULTS_DIR}/yolo_weights_epoch_{epoch}.pth")

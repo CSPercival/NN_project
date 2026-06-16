@@ -2,7 +2,7 @@ import torch
 import argparse
 import glob
 import os
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
 from config.consts import img_size, S, B, C, available_classes
 from config.paths import IMG_DIR_VAL, ANN_FILE_VAL
@@ -14,27 +14,21 @@ from utils.visualize import visualize_yolo
 from utils.best_box import select_best_box
 
 def run_inference(weights_path, threshold, num_images):
-    # Ladowanie zbioru danych
+    # Ladowanie CAŁEGO zbioru walidacyjnego (bez random_split)
     transform = yolo_transform
-    coco_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
+    val_dataset = COCODataset(IMG_DIR_VAL, ANN_FILE_VAL, transform, img_size, S, B, C, available_classes, True)
 
-    # Zapewnienie powtarzalnego podziału (takiego samego jak w main.py)
-    # Możesz dodać generator=torch.Generator().manual_seed(23) do random_split, jeśli używasz SEED
-    train_size = int(0.9 * len(coco_dataset))
-    val_size = len(coco_dataset) - train_size
-    _, val_dataset = random_split(coco_dataset, [train_size, val_size])
-    
     # Batch size 1 ułatwia pojedynczą wizualizację
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=True)
 
     # Inicjalizacja modelu i wczytywanie wag
     model = YOLOv1(YOLO_architecture)
 
-    # Automatyczne szukanie najnowszych wag, jeśli ustawiono 'auto'
+    # Automatyczne szukanie najnowszych wag (uwzględnia foldery results*/ z Twojego main.py)
     if weights_path == "auto":
-        weight_files = glob.glob("yolo_weights*.pth")
+        weight_files = glob.glob("yolo_weights*.pth") + glob.glob("results*/yolo_weights*.pth")
         if not weight_files:
-            print("Błąd: Nie znaleziono żadnego pliku z wagami (yolo_weights*.pth).")
+            print("Błąd: Nie znaleziono żadnego pliku z wagami (yolo_weights*.pth) w głównym folderze ani w folderach results.")
             return
         weights_path = max(weight_files, key=os.path.getmtime)
         print(f"--> [AUTO] Najnowsze wagi znalezione to: {weights_path}")
@@ -48,7 +42,7 @@ def run_inference(weights_path, threshold, num_images):
         
     model.eval()
 
-    print(f"Używany próg pewności (conf_threshold) = {threshold}")
+    print(f"Docelowy próg pewności (conf_threshold) = {threshold}")
 
     images_shown = 0
     with torch.no_grad():
@@ -57,18 +51,29 @@ def run_inference(weights_path, threshold, num_images):
                 break
             
             # Predykcja modelu
+            
             predictions = model(images)
+            # Wybranie najlepszych ramek z przewidywań
+            best_boxes = select_best_box(predictions[0])
+            
+            # --- DYNAMICZNY THRESHOLD ---
+            # Znajdujemy największą pewność (confidence) w całym wyjściu modelu dla tego obrazka.
+            # W YOLOv1 confidence jest zazwyczaj pod indeksem 0 w wymiarze cech.
+            max_conf = torch.max(best_boxes[..., 4]).item()
+            
+
+            
+            print("Predictions (Przewidywane):")
+            visualize_yolo(images[0], best_boxes, S, C, val_dataset.id_to_category_name, conf_threshold=threshold)
+
+
+            
             
             print(f"\n--- Obraz {images_shown + 1} ---")
             
             # Wizualizacja prawdziwych ramek (Ground Truth)
             print("Ground Truth (Oczekiwane):")
-            visualize_yolo(images[0], targets[0], S, C, coco_dataset.id_to_category_name, conf_threshold=0.1)
-            
-            # Wizualizacja predykcji modelu (przepuszczona przez select_best_box i threshold)
-            print("Predictions (Przewidywane):")
-            best_boxes = select_best_box(predictions[0])
-            visualize_yolo(images[0], best_boxes, S, C, coco_dataset.id_to_category_name, conf_threshold=threshold)
+            visualize_yolo(images[0], targets[0], S, C, val_dataset.id_to_category_name, conf_threshold=threshold)
             
             images_shown += 1
 
@@ -76,8 +81,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Zależności inferencji i wizualizacji (YOLOv1)")
     
     # Argumenty, które możesz zmieniać w terminalu
-    parser.add_argument("--weights", type=str, default="auto", help="Ścieżka do zapisanych wag modelu (domyślnie 'auto' - bierze najnowsze)")
-    parser.add_argument("--threshold", type=float, default=0.2, help="Próg pewności (confidence threshold) dla predykcji")
+    parser.add_argument("--weights", type=str, default="auto", help="Ścieżka do zapisanych wag modelu (domyślnie 'auto')")
+    parser.add_argument("--threshold", type=float, default=0.2, help="Docelowy próg pewności predykcji")
     parser.add_argument("--num_images", type=int, default=2, help="Liczba obrazów do wyświetlenia")
     
     args = parser.parse_args()
